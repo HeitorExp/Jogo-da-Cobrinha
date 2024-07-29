@@ -1,83 +1,107 @@
-let canvas = document.getElementById("snake"); //criar elemento que irá rodar o jogo
-let context = canvas.getContext("2d"); //....
-let box = 32;
-let snake = []; //criar cobrinha como lista, já que ela vai ser uma série de coordenadas, que quando pintadas, criam os quadradinhos
-snake[0] ={
-    x: 8 * box,
-    y: 8 * box
-}
+const canvas = document.getElementById("snake");
+const context = canvas.getContext("2d");
+const box = 32;
+const snake = [{ x: 8 * box, y: 8 * box }];
 let direction = "right";
-let food ={
-    x: Math.floor(Math.random() * 15 + 1) * box,
-    y: Math.floor(Math.random() * 15 + 1) * box
+let food = getRandomFoodPosition();
+
+function getRandomFoodPosition() {
+    return {
+        x: Math.floor(Math.random() * 15 + 1) * box,
+        y: Math.floor(Math.random() * 15 + 1) * box,
+    };
 }
 
-function criarBG(){
+function criarBG() {
     context.fillStyle = "lightgreen";
-    context.fillRect(0, 0, 16*box, 16*box); //desenha o retângulo usando x e y e a largura e altura setadas
+    context.fillRect(0, 0, 16 * box, 16 * box);
 }
 
-function criarCobrinha (){
-    for(i = 0; i < snake.length; i++){
+function criarCobrinha() {
+    snake.forEach(segment => {
         context.fillStyle = "green";
-        context.fillRect(snake[i].x, snake[i].y, box, box);
-    }
+        context.fillRect(segment.x, segment.y, box, box);
+    });
 }
 
-function drawFood (){
+function drawFood() {
     context.fillStyle = "red";
     context.fillRect(food.x, food.y, box, box);
 }
 
-//quando um evento acontece, detecta e chama uma função
-document.addEventListener('keydown', update);
+function update(event) {
+    const keyMap = {
+        37: "left",
+        38: "up",
+        39: "right",
+        40: "down",
+    };
 
-function update(event){
-    if(event.keyCode == 37 && direction != 'right') direction = 'left';
-    if(event.keyCode == 38 && direction != 'down') direction = 'up';
-    if(event.keyCode == 39 && direction != 'left') direction = 'right';
-    if(event.keyCode == 40 && direction != 'up') direction = 'down';
+    const oppositeDirection = {
+        left: "right",
+        right: "left",
+        up: "down",
+        down: "up",
+    };
+
+    if (keyMap[event.keyCode] && keyMap[event.keyCode] !== oppositeDirection[direction]) {
+        direction = keyMap[event.keyCode];
+    }
 }
 
-function iniciarJogo(){    
+document.addEventListener("keydown", update);
 
-    if(snake[0].x > 15*box && direction == "right") snake[0].x = 0;
-    if(snake[0].x < 0 && direction == 'left') snake[0].x = 16 * box;
-    if(snake[0].y > 15*box && direction == "down") snake[0].y = 0;
-    if(snake[0].y < 0 && direction == 'up') snake[0].y = 16 * box;
-    
-    for(i = 1; i < snake.length; i++){
-        if(snake[0].x == snake[i].x && snake[0].y == snake[i].y){
-            clearInterval(jogo);
-            alert('Game Over :(');
-        }
+function iniciarJogo() {
+    if (isOutOfBounds(snake[0])) {
+        handleOutOfBounds();
+    }
+
+    if (isCollidingWithSelf()) {
+        clearInterval(gameInterval);
+        alert("Game Over :(");
     }
 
     criarBG();
     criarCobrinha();
     drawFood();
 
-    let snakeX = snake[0].x;
-    let snakeY = snake[0].y;
+    const { x: newX, y: newY } = getNextHeadPosition();
 
-    if(direction == "right") snakeX += box;
-    if(direction == "left") snakeX -= box;
-    if (direction == "up") snakeY -= box;
-    if(direction == "down") snakeY += box;
-
-    if(snakeX != food.x || snakeY != food.y){
-        snake.pop(); //pop tira o último elemento da lista
-    }else{
-        food.x = Math.floor(Math.random() * 15 +1) * box;
-        food.y = Math.floor(Math.random() * 15 +1) * box;
-    }
-    
-    let newHead ={
-        x: snakeX,
-        y: snakeY
+    if (newX !== food.x || newY !== food.y) {
+        snake.pop();
+    } else {
+        food = getRandomFoodPosition();
     }
 
-    snake.unshift(newHead); //método unshift adiciona como primeiro quadradinho da cobrinha
+    const newHead = { x: newX, y: newY };
+    snake.unshift(newHead);
 }
 
-let jogo = setInterval(iniciarJogo, 100);
+function isOutOfBounds(segment) {
+    return segment.x > 15 * box || segment.x < 0 || segment.y > 15 * box || segment.y < 0;
+}
+
+function handleOutOfBounds() {
+    if (direction === "right") snake[0].x = 0;
+    if (direction === "left") snake[0].x = 16 * box;
+    if (direction === "down") snake[0].y = 0;
+    if (direction === "up") snake[0].y = 16 * box;
+}
+
+function isCollidingWithSelf() {
+    return snake.slice(1).some(segment => segment.x === snake[0].x && segment.y === snake[0].y);
+}
+
+function getNextHeadPosition() {
+    let newX = snake[0].x;
+    let newY = snake[0].y;
+
+    if (direction === "right") newX += box;
+    if (direction === "left") newX -= box;
+    if (direction === "up") newY -= box;
+    if (direction === "down") newY += box;
+
+    return { x: newX, y: newY };
+}
+
+const gameInterval = setInterval(iniciarJogo, 100);

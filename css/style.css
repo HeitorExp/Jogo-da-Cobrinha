@@ -1,10 +1,20 @@
-body{
+body {
     height: 95vh;
     width: 95vw;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    background-color:white;
+    background-color: white;
     color: rgb(52, 165, 52);
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+h1 {
+    margin-bottom: 20px;
+}
+
+canvas {
+    border: 1px solid #000;
 }
